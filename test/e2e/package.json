@@ -1,0 +1,11 @@
+{
+  "name": "ride-hailing-console-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node console.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.56.1"
+  }
+}

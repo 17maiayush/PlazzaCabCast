@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlazzaCabCast</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root {
+  --bg: #f3f5fa; --panel: #ffffff; --soft: #f7f9fc; --ink: #0f172a; --muted: #64748b; --line: #e3e8f0;
+  --accent: #4f46e5; --accent-2: #7c3aed; --accent-soft: #eef0ff; --accent-ink: #ffffff;
+  --ok: #059669; --ok-soft: #e7f8f0; --warn: #c2410c; --warn-soft: #fff4e8; --bad: #dc2626; --bad-soft: #fdeeee;
+  --hatch: #2563eb; --hatch-soft: #e8f0fe; --sedan: #7c3aed; --sedan-soft: #f2ebfe; --busy: #94a3b8;
+  --map: #eef3fb; --grid: #dde5f1;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 6px 20px rgba(15, 23, 42, .05);
+  --radius: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0e14; --panel: #131720; --soft: #191e29; --ink: #e8ebf2; --muted: #8b95a8; --line: #252b38;
+    --accent: #7c83ff; --accent-2: #a78bfa; --accent-soft: #1e2140; --accent-ink: #0b0e14;
+    --ok: #34d399; --ok-soft: #0f2a22; --warn: #fb923c; --warn-soft: #2e1d10; --bad: #f87171; --bad-soft: #2e1515;
+    --hatch: #60a5fa; --hatch-soft: #14233d; --sedan: #a78bfa; --sedan-soft: #231a3d; --busy: #556074;
+    --map: #10151f; --grid: #1c2331;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+header { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 14px; padding: 12px 24px; background: color-mix(in srgb, var(--panel) 85%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.logo { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; flex: 0 0 auto; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent); }
+.logo svg { width: 18px; height: 18px; }
+.brand { display: grid; line-height: 1.2; }
+header h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.brand small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.health { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--soft); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--busy); }
+.dot.up { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+.dot.down { background: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
+.spacer { flex: 1; }
+.brand { min-width: 0; }
+header h1 { overflow: hidden; text-overflow: ellipsis; }
+.narrow { display: none; }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.chip b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+main { display: grid; grid-template-columns: 330px minmax(0, 1fr) 400px; gap: 20px; max-width: 1560px; margin: 0 auto; padding: 20px 24px 40px; align-items: start; }
+@media (max-width: 1240px) { main { grid-template-columns: 1fr 1fr; } .col-center { grid-column: 1 / -1; order: -1; } }
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; padding: 14px 16px 32px; gap: 14px; }
+  header { padding: 10px 16px; }
+  .stats, .brand small, #health-text { display: none; }
+  .health { padding: 6px; }
+  #seed { padding: 0 12px; }
+  #seed .wide { display: none; }
+  #seed .narrow { display: inline; }
+  header { gap: 10px; }
+  header h1 { font-size: 15px; }
+}
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (max-width: 760px) { .col { gap: 14px; } }
+
+.card { padding: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+.card h2 .ico { width: 28px; height: 28px; padding: 6px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+.ico { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+form { display: grid; gap: 10px; }
+form + form { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.row { display: flex; gap: 10px; align-items: end; }
+.row > * { flex: 1; min-width: 0; }
+.row > button { flex: 0 0 auto; }
+label, .field { display: grid; gap: 5px; font-size: 12px; font-weight: 550; color: var(--muted); }
+input, select, button { font: inherit; color: inherit; }
+input, select { width: 100%; height: 38px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); transition: border-color .15s, box-shadow .15s, background .15s; }
+input::placeholder { color: color-mix(in srgb, var(--muted) 75%, transparent); }
+input:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+input:focus, select:focus { outline: none; border-color: var(--accent); background: var(--panel); box-shadow: 0 0 0 3px var(--accent-soft); }
+button { height: 38px; padding: 0 14px; white-space: nowrap; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-weight: 550; cursor: pointer; transition: transform .05s, filter .15s, background .15s, border-color .15s; }
+button:hover { background: var(--soft); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+button:active { transform: translateY(1px); }
+button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+button.primary { border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font-weight: 650; box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent); }
+button.primary:hover { filter: brightness(1.06); }
+button.danger { color: var(--bad); }
+button.danger:hover { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 30%, var(--line)); }
+button:disabled { opacity: .6; cursor: progress; }
+#book-submit { height: 46px; font-size: 15px; }
+
+.list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 14px; }
+.item { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); font-size: 13px; transition: background .15s; }
+.item:hover { background: var(--soft); }
+.grow { flex: 1; min-width: 0; }
+.grow > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grow > div:first-child { font-weight: 550; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--muted); }
+.push { margin-left: auto; }
+.avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto; font-size: 13px; font-weight: 700; background: var(--accent-soft); color: var(--accent); }
+.av-HATCHBACK { background: var(--hatch-soft); color: var(--hatch); }
+.av-SEDAN { background: var(--sedan-soft); color: var(--sedan); }
+
+.badge { display: inline-flex; align-items: center; flex: 0 0 auto; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.b-ongoing { background: var(--accent-soft); color: var(--accent); }
+.b-completed, .b-free { background: var(--ok-soft); color: var(--ok); }
+.b-cancelled, .b-busy { background: var(--soft); color: var(--muted); }
+.b-upgrade { background: var(--sedan-soft); color: var(--sedan); }
+.b-surge, .b-coupon { background: var(--warn-soft); color: var(--warn); }
+.empty { margin: 0; padding: 14px; border: 1px dashed var(--line); border-radius: 11px; color: var(--muted); font-size: 13px; text-align: center; }
+.hint { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+
+details.advanced { padding: 2px 0; }
+details.advanced summary { cursor: pointer; font-size: 12px; font-weight: 550; color: var(--muted); }
+details.advanced summary:hover { color: var(--accent); }
+details.advanced[open] summary { margin-bottom: 8px; }
+.quote { display: grid; gap: 8px; padding: 16px; border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 12px; background: linear-gradient(135deg, var(--accent-soft), var(--panel) 70%); }
+.quote .empty { border: 0; padding: 6px; }
+.quote-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
+.quote-price { font-size: 34px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.quote-sub { color: var(--muted); font-size: 13px; }
+.note { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.note::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.note-ok { color: var(--ok); }
+.note-bad { color: var(--bad); }
+.note-upgrade { color: var(--sedan); }
+.quote details summary { cursor: pointer; font-size: 12px; font-weight: 550; color: var(--muted); }
+.quote details[open] summary { margin-bottom: 6px; }
+
+svg.map { display: block; width: 100%; height: auto; border-radius: 12px; cursor: crosshair; background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 6%, var(--map)), var(--map) 60%); }
+.map .grid { stroke: var(--grid); stroke-width: 1; }
+.map .radius { fill: var(--accent); fill-opacity: .07; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.map .trip { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 1 6; stroke-linecap: round; }
+.map .place { fill: var(--muted); opacity: .7; }
+.map text { font: 500 11px "Inter", system-ui, sans-serif; fill: var(--muted); pointer-events: none; }
+.map text.driver-name { font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: 3px; }
+.map .halo { opacity: .18; }
+.map .halo.HATCHBACK { fill: var(--hatch); }
+.map .halo.SEDAN { fill: var(--sedan); }
+.map .drv { stroke: var(--panel); stroke-width: 2.5; }
+.map .drv.HATCHBACK { fill: var(--hatch); }
+.map .drv.SEDAN { fill: var(--sedan); }
+.map .drv.busy { fill: var(--busy); }
+.map .pickup { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 2; }
+.map .pin { fill: var(--bad); stroke: var(--panel); stroke-width: 2.5; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; }
+.legend i.sq { border-radius: 3px; background: var(--warn-soft); border: 2px solid var(--warn); }
+.sw-HATCHBACK { background: var(--hatch); }
+.sw-SEDAN { background: var(--sedan); }
+
+.ride { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 11px; background: var(--panel); }
+.ride-completed { border-left-color: var(--ok); }
+.ride-cancelled { border-left-color: var(--busy); }
+.ride-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.route { font-size: 13px; }
+.route b { font-weight: 650; }
+.fare { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fare td { padding: 3px 0; color: var(--muted); }
+.fare td:last-child { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fare tr.total td { padding-top: 8px; border-top: 1px solid var(--line); color: var(--ink); font-weight: 700; font-size: 14px; }
+
+.log { display: grid; max-height: 360px; overflow: auto; margin: 0 -6px; }
+.log details { padding: 6px; border-radius: 8px; }
+.log details:hover { background: var(--soft); }
+.log summary { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; list-style: none; }
+.log summary::-webkit-details-marker { display: none; }
+.log summary > span:nth-child(2) { min-width: 34px; padding: 1px 6px; border-radius: 6px; text-align: center; font-variant-numeric: tabular-nums; }
+.s2 { color: var(--ok); background: var(--ok-soft); font-weight: 650; }
+.s4 { color: var(--warn); background: var(--warn-soft); font-weight: 650; }
+.s5, .s0 { color: var(--bad); background: var(--bad-soft); font-weight: 650; }
+.log pre { margin: 8px 0 2px; padding: 10px; max-height: 240px; overflow: auto; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; font-size: 11px; }
+.log > .empty { margin: 0 6px; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; z-index: 5; max-width: min(460px, calc(100vw - 32px)); padding: 11px 16px; border-radius: 12px; background: var(--ink); color: var(--bg); font-weight: 550; box-shadow: 0 10px 30px rgba(15, 23, 42, .25); opacity: 0; transform: translate(-50%, 10px); transition: opacity .2s, transform .2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { background: var(--bad); color: #fff; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17h14M6 17l1.4-5.2A2 2 0 0 1 9.3 10h5.4a2 2 0 0 1 1.9 1.8L18 17"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></span>
+  <div class="brand"><h1>PlazzaCabCast</h1><small>Go API · in-memory · live from the server</small></div>
+  <span class="health"><span class="dot" id="health-dot"></span><span id="health-text">checking API</span></span>
+  <span class="spacer"></span>
+  <div class="stats" id="stats" aria-live="polite"></div>
+  <button type="button" id="seed" aria-label="Load demo data"><span class="wide">Load demo data</span><span class="narrow">Demo data</span></button>
+</header>
+
+<main>
+  <div class="col">
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg>Riders</h2>
+      <form id="user-form">
+        <div class="row"><input name="name" placeholder="Name" required autocomplete="off"><button class="primary">Register</button></div>
+      </form>
+      <div class="list" id="user-list"></div>
+    </section>
+
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17h14M6 17l1.4-5.2A2 2 0 0 1 9.3 10h5.4a2 2 0 0 1 1.9 1.8L18 17"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>Drivers</h2>
+      <form id="driver-form">
+        <input name="name" placeholder="Name" required autocomplete="off">
+        <div class="row">
+          <label>Car type
+            <select name="car_type"><option value="HATCHBACK">Hatchback</option><option value="SEDAN">Sedan</option></select>
+          </label>
+          <label>Rating <input name="rating" type="number" min="0" max="5" step="0.1" value="4.5"></label>
+        </div>
+        <label>Location <select name="place" data-place></select></label>
+        <button class="primary">Register driver</button>
+      </form>
+      <form id="move-form">
+        <div class="row">
+          <label>Move cab <select name="driver_id" id="move-driver" required></select></label>
+          <label>To <select name="place" data-place></select></label>
+          <button>Update</button>
+        </div>
+      </form>
+      <div class="list" id="driver-list"></div>
+    </section>
+
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M13 7v10" stroke-dasharray="2 2"/></svg>Coupons</h2>
+      <form id="coupon-form">
+        <div class="row">
+          <input name="code" placeholder="Code" required autocomplete="off">
+          <select name="kind"><option value="PERCENT">% off</option><option value="FLAT">₹ off</option></select>
+          <input name="value" type="number" min="1" step="1" placeholder="Value" required>
+        </div>
+        <label>Expires (optional) <input name="expires_at" type="datetime-local"></label>
+        <button class="primary">Add coupon</button>
+      </form>
+      <div class="list" id="coupon-list"></div>
+    </section>
+  </div>
+
+  <div class="col col-center">
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/></svg>Plan a trip</h2>
+      <form id="book-form">
+        <div class="row">
+          <label>Rider <select name="user_id" id="book-user" required></select></label>
+          <label>Car type
+            <select name="car_type"><option value="HATCHBACK">Hatchback</option><option value="SEDAN">Sedan</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Pickup <select name="place" id="book-pickup" data-place></select></label>
+          <label>Drop <select name="drop" id="book-drop" data-place data-default="1"></select></label>
+        </div>
+        <label>Coupon <input name="coupon_code" placeholder="optional, e.g. SAVE20" autocomplete="off"></label>
+        <details class="advanced">
+          <summary>Advanced: Idempotency-Key</summary>
+          <div class="row">
+            <input name="key" id="idem-key" placeholder="book twice with the same key to see a replay" autocomplete="off" aria-label="Idempotency-Key">
+            <button type="button" id="new-key">New key</button>
+          </div>
+        </details>
+        <div class="quote" id="quote" aria-live="polite"></div>
+        <button class="primary" id="book-submit">Book ride</button>
+        <p class="hint">The quote is live and holds nothing. The final fare uses the actual drop point; surge and coupon are locked the moment you book.</p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Bengaluru</h2>
+      <svg class="map" id="map" viewBox="0 0 600 500" role="img" aria-label="Map of drivers, pickups and the matching radius"></svg>
+      <div class="legend">
+        <span><i class="sw-HATCHBACK"></i>Hatchback</span>
+        <span><i class="sw-SEDAN"></i>Sedan</span>
+        <span><i style="background: var(--busy)"></i>On a ride</span>
+        <span><i class="sq"></i>Ongoing pickup</span>
+        <span><i style="background: var(--bad)"></i>Map pin</span>
+      </div>
+      <p class="hint">Click the map to drop a pin, then choose "Map pin" in any location field. The dashed ring is the default 5 km matching radius around the selected pickup.</p>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h8"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Rides</h2>
+      <div class="list" id="ride-list"></div>
+    </section>
+
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</h2>
+      <form id="history-form">
+        <div class="row">
+          <label>For <select name="who" id="history-who" required></select></label>
+          <label>Status
+            <select name="status">
+              <option value="">All</option><option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+            </select>
+          </label>
+          <button>Fetch</button>
+        </div>
+      </form>
+      <div class="list" id="history-list"></div>
+    </section>
+
+    <section class="card">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</h2>
+      <div class="log" id="log"><p class="empty">Every API call shows up here with its status and body.</p></div>
+    </section>
+    <p class="hint">Everything on this page is read from the server and refreshes every few seconds, so changes made with curl or <code>scripts/demo.sh</code> show up here too.</p>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+const PLACES = [
+  { name: "MG Road", lat: 12.9752, lng: 77.6058 },
+  { name: "Indiranagar", lat: 12.9719, lng: 77.6412 },
+  { name: "Koramangala", lat: 12.9352, lng: 77.6245 },
+  { name: "HSR Layout", lat: 12.9116, lng: 77.6474 },
+  { name: "Jayanagar", lat: 12.925, lng: 77.5938 },
+  { name: "Hebbal", lat: 13.0358, lng: 77.597 },
+  { name: "Whitefield", lat: 12.9698, lng: 77.75 },
+  { name: "Electronic City", lat: 12.8456, lng: 77.6603 },
+];
+const BOUNDS = { north: 13.08, south: 12.8, west: 77.5, east: 77.8 };
+const VIEW = { width: 600, height: 500 };
+// The page cannot read the server's MATCH_RADIUS_KM, so the ring always shows the default.
+const RADIUS_KM = 5;
+const REFRESH_MS = 5000;
+
+// Everything except the UI-only fields is a copy of what the server last returned.
+const state = {
+  users: [],
+  drivers: [],
+  coupons: [],
+  rides: [],
+  drops: new Map(), // ride id -> chosen drop option, so a refresh keeps the selection
+  history: null,
+  quote: null,
+  quoteError: null,
+  pin: null,
+};
+
+const $ = (selector) => document.querySelector(selector);
+const nameOf = (list, id) => list.find((x) => x.id === id)?.name ?? id;
+
+// Children are appended as text nodes, never parsed as HTML, so user-typed names are safe.
+function el(tag, props = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props)) {
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  node.append(...children.flat().filter((c) => c !== null && c !== undefined && c !== false && c !== ""));
+  return node;
+}
+
+function svgEl(tag, attrs = {}, text = "") {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (text) node.textContent = text;
+  return node;
+}
+
+const inr = (paise) => `₹${Math.floor(paise / 100)}.${String(paise % 100).padStart(2, "0")}`;
+const km = (metres) => `${(metres / 1000).toFixed(2)} km`;
+const titleCase = (s) => s.charAt(0) + s.slice(1).toLowerCase();
+
+function distanceKm(a, b) {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371.0088 * Math.asin(Math.sqrt(h));
+}
+
+function placeName(loc) {
+  const nearest = PLACES.reduce((best, p) => (distanceKm(p, loc) < distanceKm(best, loc) ? p : best));
+  const d = distanceKm(nearest, loc);
+  if (d < 0.05) return nearest.name;
+  if (d < 1.5) return `near ${nearest.name}`;
+  return `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
+}
+
+class ApiError extends Error {
+  constructor(status, code, message) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+// quiet calls (background refresh, live quotes) stay out of the activity log.
+async function api(method, path, body, { headers = {}, quiet = false } = {}) {
+  const init = { method, headers: { ...headers } };
+  if (body !== undefined) {
+    init.headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+  let res;
+  try {
+    res = await fetch(path, init);
+  } catch {
+    if (!quiet) logCall(method, path, 0, "NETWORK", null);
+    throw new ApiError(0, "NETWORK", "The API is not reachable");
+  }
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+  }
+  const replayed = res.headers.get("Idempotent-Replayed") === "true";
+  if (!quiet) logCall(method, path, res.status, data?.error?.code ?? (replayed ? "REPLAYED" : ""), data);
+  if (!res.ok) {
+    throw new ApiError(res.status, data?.error?.code ?? `HTTP_${res.status}`, data?.error?.message ?? text.trim());
+  }
+  return { data, replayed };
+}
+
+async function refresh() {
+  const quiet = { quiet: true };
+  const [users, drivers, coupons] = await Promise.all([
+    api("GET", "/users", undefined, quiet),
+    api("GET", "/drivers", undefined, quiet),
+    api("GET", "/coupons", undefined, quiet),
+  ]);
+  const histories = await Promise.all(users.data.users.map((u) => api("GET", `/users/${encodeURIComponent(u.id)}/rides`, undefined, quiet)));
+  state.users = users.data.users;
+  state.drivers = drivers.data.drivers;
+  state.coupons = coupons.data.coupons;
+  state.rides = histories.flatMap((h) => h.data.rides).sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+function locationOf(option) {
+  if (option === "pin") {
+    if (!state.pin) throw new Error("Drop a pin on the map first");
+    return { ...state.pin };
+  }
+  const place = PLACES[Number(option)];
+  return { lat: place.lat, lng: place.lng };
+}
+
+function fillPlaceSelect(select) {
+  const previous = select.value || select.dataset.default || "0";
+  const pin = el("option", { value: "pin" }, state.pin ? `Map pin (${state.pin.lat}, ${state.pin.lng})` : "Map pin (click the map)");
+  pin.disabled = !state.pin;
+  select.replaceChildren(...PLACES.map((p, i) => el("option", { value: String(i) }, p.name)), pin);
+  select.value = previous === "pin" && !state.pin ? "0" : previous;
+}
+
+function fillPlaceSelects() {
+  document.querySelectorAll("select[data-place]").forEach(fillPlaceSelect);
+}
+
+function setOptions(select, options, emptyLabel) {
+  const previous = select.value;
+  const nodes = options.length
+    ? options.map(([value, label]) => el("option", { value }, label))
+    : [el("option", { value: "" }, emptyLabel)];
+  select.replaceChildren(...nodes);
+  if (options.some(([value]) => value === previous)) select.value = previous;
+}
+
+const avatar = (name, cls = "") => el("span", { class: `avatar ${cls}`, "aria-hidden": "true" }, name.trim().charAt(0).toUpperCase());
+const badge = (text, cls) => el("span", { class: `badge ${cls}` }, text);
+const empty = (text) => el("p", { class: "empty" }, text);
+
+function renderStats() {
+  const free = state.drivers.filter((d) => d.status === "AVAILABLE").length;
+  const ongoing = state.rides.filter((r) => r.status === "ONGOING").length;
+  const chip = (value, label) => el("span", { class: "chip" }, el("b", {}, String(value)), ` ${label}`);
+  $("#stats").replaceChildren(
+    chip(state.users.length, state.users.length === 1 ? "rider" : "riders"),
+    chip(`${free}/${state.drivers.length}`, "drivers free"),
+    chip(ongoing, ongoing === 1 ? "ride ongoing" : "rides ongoing"));
+}
+
+function renderUsers() {
+  $("#user-list").replaceChildren(...(state.users.length
+    ? state.users.map((u) => el("div", { class: "item" }, avatar(u.name), el("div", { class: "grow" }, el("div", {}, u.name), el("div", { class: "mono" }, u.id))))
+    : [empty("No riders yet. Register one, or press Load demo data.")]));
+  setOptions($("#book-user"), state.users.map((u) => [u.id, u.name]), "Register a rider first");
+}
+
+function renderDrivers() {
+  $("#driver-list").replaceChildren(...(state.drivers.length
+    ? state.drivers.map((d) => el("div", { class: "item" },
+      avatar(d.name, `av-${d.car_type}`),
+      el("div", { class: "grow" },
+        el("div", {}, `${d.name} · ${titleCase(d.car_type)} · ★ ${d.rating.toFixed(1)}`),
+        el("div", { class: "mono" }, `${d.id} · ${placeName(d.location)}`)),
+      d.status === "AVAILABLE" ? badge("free", "b-free") : badge("on a ride", "b-busy")))
+    : [empty("No drivers yet.")]));
+  setOptions($("#move-driver"), state.drivers.map((d) => [d.id, d.name]), "No drivers yet");
+}
+
+function renderCoupons() {
+  $("#coupon-list").replaceChildren(...(state.coupons.length
+    ? state.coupons.map((c) => el("div", { class: "item" },
+      el("div", { class: "grow" },
+        el("div", {}, `${c.code} · ${c.kind === "PERCENT" ? `${c.percent}% off` : `${inr(c.amount_paise)} off`}`),
+        el("div", { class: "mono" }, c.expires_at ? `expires ${new Date(c.expires_at).toLocaleString()}` : "no expiry")),
+      el("button", { type: "button", class: "danger", onclick: guard(() => deleteCoupon(c.code)) }, "Delete")))
+    : [empty("No coupons yet.")]));
+}
+
+function fareTable(fare, requestedType) {
+  const rows = [
+    ["Distance", km(fare.distance_m)],
+    [`Metered, ${titleCase(requestedType)} tariff`, inr(fare.metered_paise)],
+  ];
+  if (fare.min_fare_applied) rows.push(["Minimum fare applied", inr(fare.base_paise)]);
+  if (fare.surge_multiplier > 1) rows.push([`Surge ×${fare.surge_multiplier}`, inr(fare.surged_paise)]);
+  if (fare.discount_paise > 0) rows.push(["Coupon", `− ${inr(fare.discount_paise)}`]);
+  return el("table", { class: "fare" }, el("tbody", {},
+    rows.map(([label, value]) => el("tr", {}, el("td", {}, label), el("td", {}, value))),
+    el("tr", { class: "total" }, el("td", {}, "Total"), el("td", {}, `₹${fare.total_inr}`))));
+}
+
+function renderQuote() {
+  const box = $("#quote");
+  if (state.quoteError) {
+    box.replaceChildren(el("div", { class: "note note-bad" }, state.quoteError));
+    return;
+  }
+  const q = state.quote;
+  if (!q) {
+    box.replaceChildren(empty("Calculating the price…"));
+    return;
+  }
+  const type = titleCase(q.requested_car_type);
+  let note = ["note-ok", `A ${type} is free within ${RADIUS_KM} km of the pickup`];
+  if (!q.driver_available) note = ["note-bad", `No driver within ${RADIUS_KM} km of the pickup right now`];
+  else if (q.upgraded) note = ["note-upgrade", `No ${type} free nearby: you get a ${titleCase(q.assigned_car_type)} at the ${type} price`];
+  box.replaceChildren(
+    el("div", { class: "quote-main" },
+      el("span", { class: "quote-price" }, `₹${q.fare.total_inr}`),
+      el("span", { class: "quote-sub" }, [km(q.fare.distance_m), type,
+        q.fare.surge_multiplier > 1 && `surge ×${q.fare.surge_multiplier}`,
+        q.coupon_code && `${q.coupon_code} applied`].filter(Boolean).join(" · "))),
+    el("div", { class: `note ${note[0]}` }, note[1]),
+    el("details", {}, el("summary", {}, "Price breakdown"), fareTable(q.fare, q.requested_car_type)));
+}
+
+function rideCard(ride) {
+  const status = ride.status.toLowerCase();
+  const head = el("div", { class: "ride-head" },
+    badge(status, `b-${status}`),
+    ride.upgraded && badge(`free upgrade to ${titleCase(ride.assigned_car_type)}`, "b-upgrade"),
+    ride.surge_multiplier > 1 && badge(`surge ×${ride.surge_multiplier}`, "b-surge"),
+    ride.coupon_code && badge(ride.coupon_code, "b-coupon"),
+    el("span", { class: "mono push" }, ride.id));
+  const route = el("div", { class: "route" },
+    el("b", {}, nameOf(state.users, ride.user_id)), " with ", el("b", {}, nameOf(state.drivers, ride.driver_id)),
+    ` (${titleCase(ride.assigned_car_type)}) · ${placeName(ride.pickup)}`, ride.drop && ` → ${placeName(ride.drop)}`);
+
+  let detail;
+  if (ride.status === "ONGOING") {
+    const drop = el("select", { "data-place": "", "data-default": "1", "aria-label": "Drop location" });
+    fillPlaceSelect(drop);
+    if (state.drops.has(ride.id)) drop.value = state.drops.get(ride.id);
+    drop.addEventListener("change", () => state.drops.set(ride.id, drop.value));
+    detail = el("div", { class: "row" }, drop,
+      el("button", { type: "button", class: "primary", onclick: guard(() => endRide(ride.id, drop.value)) }, "End ride"),
+      el("button", { type: "button", class: "danger", onclick: guard(() => cancelRide(ride.id)) }, "Cancel"));
+  } else if (ride.status === "COMPLETED") {
+    detail = fareTable(ride.fare, ride.requested_car_type);
+  } else {
+    const fee = ride.cancellation_fee_paise;
+    detail = el("div", {}, `Cancellation fee ${inr(fee)}`, fee === 0 && ", inside the grace window");
+  }
+  return el("div", { class: `ride ride-${status}` }, head, route, detail);
+}
+
+function renderRides() {
+  $("#ride-list").replaceChildren(...(state.rides.length ? state.rides.map(rideCard) : [empty("No rides yet. Plan a trip in the middle column.")]));
+}
+
+function renderHistory() {
+  const who = $("#history-who");
+  const previous = who.value;
+  const groups = [["Riders", "users", state.users], ["Drivers", "drivers", state.drivers]].filter(([, , items]) => items.length);
+  who.replaceChildren(...(groups.length
+    ? groups.map(([label, path, items]) => el("optgroup", { label },
+      items.map((x) => el("option", { value: `${path}/${encodeURIComponent(x.id)}` }, x.name))))
+    : [el("option", { value: "" }, "Register someone first")]));
+  if ([...who.options].some((o) => o.value === previous)) who.value = previous;
+
+  if (state.history === null) {
+    $("#history-list").replaceChildren(empty("Pick a rider or driver and fetch their rides from the server."));
+    return;
+  }
+  $("#history-list").replaceChildren(...(state.history.length
+    ? state.history.map((r) => {
+      const status = r.status.toLowerCase();
+      const amount = r.fare ? `₹${r.fare.total_inr}` : r.status === "CANCELLED" ? `fee ${inr(r.cancellation_fee_paise)}` : "in progress";
+      return el("div", { class: "item" }, badge(status, `b-${status}`),
+        el("div", { class: "grow" }, el("div", {}, amount), el("div", { class: "mono" }, `${r.id} · ${new Date(r.created_at).toLocaleTimeString()}`)));
+    })
+    : [empty("No rides match.")]));
+}
+
+function project({ lat, lng }) {
+  return [
+    ((lng - BOUNDS.west) / (BOUNDS.east - BOUNDS.west)) * VIEW.width,
+    ((BOUNDS.north - lat) / (BOUNDS.north - BOUNDS.south)) * VIEW.height,
+  ];
+}
+
+function unproject(x, y) {
+  const round = (v) => Number(v.toFixed(4));
+  return {
+    lat: round(BOUNDS.north - (y / VIEW.height) * (BOUNDS.north - BOUNDS.south)),
+    lng: round(BOUNDS.west + (x / VIEW.width) * (BOUNDS.east - BOUNDS.west)),
+  };
+}
+
+function safeLocation(option) {
+  try { return locationOf(option); } catch { return null; }
+}
+
+function renderMap() {
+  const map = $("#map");
+  map.replaceChildren();
+  for (let x = 100; x < VIEW.width; x += 100) map.append(svgEl("line", { class: "grid", x1: x, y1: 0, x2: x, y2: VIEW.height }));
+  for (let y = 100; y < VIEW.height; y += 100) map.append(svgEl("line", { class: "grid", x1: 0, y1: y, x2: VIEW.width, y2: y }));
+
+  const pickup = safeLocation($("#book-pickup").value);
+  if (pickup) {
+    const [cx, cy] = project(pickup);
+    const kmPerLng = 111.32 * Math.cos((pickup.lat * Math.PI) / 180);
+    map.append(svgEl("ellipse", {
+      class: "radius", cx, cy,
+      rx: (RADIUS_KM / kmPerLng / (BOUNDS.east - BOUNDS.west)) * VIEW.width,
+      ry: (RADIUS_KM / 110.57 / (BOUNDS.north - BOUNDS.south)) * VIEW.height,
+    }));
+    const drop = safeLocation($("#book-drop").value);
+    if (drop) {
+      const [dx, dy] = project(drop);
+      map.append(svgEl("line", { class: "trip", x1: cx, y1: cy, x2: dx, y2: dy }));
+    }
+  }
+
+  for (const place of PLACES) {
+    const [x, y] = project(place);
+    map.append(svgEl("circle", { class: "place", cx: x, cy: y, r: 2.5 }), svgEl("text", { x: x + 6, y: y + 12 }, place.name));
+  }
+  for (const ride of state.rides) {
+    if (ride.status !== "ONGOING") continue;
+    const [x, y] = project(ride.pickup);
+    map.append(svgEl("rect", { class: "pickup", x: x - 6, y: y - 6, width: 12, height: 12 }));
+  }
+  for (const d of state.drivers) {
+    const [x, y] = project(d.location);
+    if (d.status === "AVAILABLE") map.append(svgEl("circle", { class: `halo ${d.car_type}`, cx: x, cy: y, r: 14 }));
+    const dot = svgEl("circle", { class: `drv ${d.car_type}${d.status === "BUSY" ? " busy" : ""}`, cx: x, cy: y, r: 7 });
+    dot.append(svgEl("title", {}, `${d.name}, ${titleCase(d.car_type)}, ${d.status.toLowerCase()}`));
+    map.append(dot, svgEl("text", { class: "driver-name", x, y: y - 11, "text-anchor": "middle" }, d.name));
+  }
+  if (state.pin) {
+    const [x, y] = project(state.pin);
+    map.append(svgEl("circle", { class: "pin", cx: x, cy: y, r: 6 }));
+  }
+}
+
+function render() {
+  renderStats();
+  renderUsers();
+  renderDrivers();
+  renderCoupons();
+  renderQuote();
+  renderRides();
+  renderHistory();
+  renderMap();
+}
+
+function logCall(method, path, status, code, data) {
+  const box = $("#log");
+  box.querySelector(".empty")?.remove();
+  box.prepend(el("details", {},
+    el("summary", {},
+      el("span", { class: "mono" }, new Date().toLocaleTimeString()),
+      el("span", { class: `s${String(status).charAt(0)}` }, status ? String(status) : "ERR"),
+      el("span", { class: "grow" }, `${method} ${path}`),
+      code && el("span", { class: "mono" }, code)),
+    data && el("pre", {}, JSON.stringify(data, null, 2))));
+  while (box.children.length > 60) box.lastChild.remove();
+}
+
+let toastTimer;
+function toast(message, isError = false) {
+  const node = $("#toast");
+  node.textContent = message;
+  node.className = `toast show${isError ? " error" : ""}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { node.className = "toast"; }, isError ? 5000 : 3000);
+}
+
+const FRIENDLY = {
+  NETWORK: "The API is not reachable. Is the server running?",
+  INVALID_COUPON: "That coupon does not exist or has expired.",
+  NO_DRIVER_AVAILABLE: "No driver is free within range of that pickup.",
+};
+
+function describe(err) {
+  if (!(err instanceof ApiError)) return err.message;
+  return FRIENDLY[err.code] ? `${FRIENDLY[err.code]} (${err.code})` : `${err.code}: ${err.message}`;
+}
+
+// Every action goes through guard: the button is disabled while it runs, errors become a toast,
+// and the view is re-read from the server afterwards whatever happened.
+function guard(fn) {
+  return async (event) => {
+    event?.preventDefault();
+    const trigger = event?.submitter ?? (event?.currentTarget instanceof HTMLButtonElement ? event.currentTarget : null);
+    if (trigger) trigger.disabled = true;
+    try {
+      await fn(event);
+    } catch (err) {
+      toast(describe(err), true);
+    } finally {
+      if (trigger) trigger.disabled = false;
+    }
+    await sync();
+    scheduleQuote();
+  };
+}
+
+let syncing = false;
+async function sync() {
+  if (syncing) return;
+  syncing = true;
+  try {
+    await refresh();
+  } catch {
+    // the health indicator already says the API is down; keep showing the last good view
+  } finally {
+    syncing = false;
+  }
+  render();
+}
+
+let quoteTimer;
+let quoteSeq = 0;
+function scheduleQuote() {
+  clearTimeout(quoteTimer);
+  quoteTimer = setTimeout(updateQuote, 200);
+}
+
+// Only the newest quote request may write the result, so fast typing cannot show a stale price.
+async function updateQuote() {
+  const seq = ++quoteSeq;
+  const f = formValues($("#book-form"));
+  let next = { quote: null, quoteError: null };
+  try {
+    const body = { car_type: f.car_type, pickup: locationOf(f.place), drop: locationOf(f.drop) };
+    if (f.coupon_code.trim()) body.coupon_code = f.coupon_code.trim();
+    next.quote = (await api("POST", "/rides/estimate", body, { quiet: true })).data;
+  } catch (err) {
+    next = { quote: null, quoteError: describe(err) };
+  }
+  if (seq !== quoteSeq) return;
+  Object.assign(state, next);
+  renderQuote();
+}
+
+const formValues = (form) => Object.fromEntries(new FormData(form));
+
+async function endRide(id, dropOption) {
+  const { data } = await api("POST", `/rides/${encodeURIComponent(id)}/end`, { drop: locationOf(dropOption) });
+  const note = data.fare.min_fare_applied ? ", minimum fare" : data.upgraded ? `, charged as ${titleCase(data.requested_car_type)}` : "";
+  toast(`Ride complete: ₹${data.fare.total_inr}${note}`);
+}
+
+async function cancelRide(id) {
+  const { data } = await api("POST", `/rides/${encodeURIComponent(id)}/cancel`);
+  toast(data.cancellation_fee_paise === 0 ? "Cancelled free, inside the grace window" : `Cancelled, fee ${inr(data.cancellation_fee_paise)}`);
+}
+
+async function deleteCoupon(code) {
+  await api("DELETE", `/coupons/${encodeURIComponent(code)}`);
+  toast(`Deleted ${code}. Rides already booked with it keep their discount.`);
+}
+
+$("#user-form").addEventListener("submit", guard(async (event) => {
+  const { data } = await api("POST", "/users", { name: formValues(event.target).name });
+  event.target.reset();
+  toast(`Registered ${data.name}`);
+}));
+
+$("#driver-form").addEventListener("submit", guard(async (event) => {
+  const f = formValues(event.target);
+  const body = { name: f.name, car_type: f.car_type, location: locationOf(f.place) };
+  if (f.rating !== "") body.rating = Number(f.rating);
+  const { data } = await api("POST", "/drivers", body);
+  event.target.elements.name.value = "";
+  toast(`Registered ${data.name}, ${titleCase(data.car_type)} at ${placeName(data.location)}`);
+}));
+
+$("#move-form").addEventListener("submit", guard(async (event) => {
+  const f = formValues(event.target);
+  if (!f.driver_id) throw new Error("Register a driver first");
+  const { data } = await api("PUT", `/drivers/${encodeURIComponent(f.driver_id)}/location`, locationOf(f.place));
+  toast(`${data.name} is now at ${placeName(data.location)}`);
+}));
+
+$("#coupon-form").addEventListener("submit", guard(async (event) => {
+  const f = formValues(event.target);
+  const body = { code: f.code, kind: f.kind };
+  if (f.kind === "PERCENT") body.percent = Number(f.value);
+  else body.amount_paise = Math.round(Number(f.value) * 100);
+  if (f.expires_at) body.expires_at = new Date(f.expires_at).toISOString();
+  const { data } = await api("POST", "/coupons", body);
+  event.target.reset();
+  toast(`Added ${data.code}`);
+}));
+
+$("#book-form").addEventListener("submit", guard(async (event) => {
+  const f = formValues(event.target);
+  if (!f.user_id) throw new Error("Register a rider first");
+  const body = { user_id: f.user_id, car_type: f.car_type, pickup: locationOf(f.place) };
+  if (f.coupon_code.trim()) body.coupon_code = f.coupon_code.trim();
+  const headers = f.key.trim() ? { "Idempotency-Key": f.key.trim() } : {};
+  const { data, replayed } = await api("POST", "/rides", body, { headers });
+  if (replayed) {
+    toast("Replayed: same key, same ride, nothing new was booked");
+    return;
+  }
+  state.drops.set(data.id, f.drop);
+  const driver = nameOf(state.drivers, data.driver_id);
+  toast(data.upgraded
+    ? `No ${titleCase(data.requested_car_type)} nearby: ${driver}'s ${titleCase(data.assigned_car_type)} at the ${titleCase(data.requested_car_type)} price`
+    : `Booked with ${driver}${data.surge_multiplier > 1 ? `, surge ×${data.surge_multiplier}` : ""}`);
+}));
+
+$("#book-form").addEventListener("input", scheduleQuote);
+$("#book-form").addEventListener("change", () => { scheduleQuote(); renderMap(); });
+
+$("#history-form").addEventListener("submit", guard(async (event) => {
+  const f = formValues(event.target);
+  if (!f.who) throw new Error("Register a rider or driver first");
+  const query = f.status ? `?status=${f.status}` : "";
+  state.history = (await api("GET", `/${f.who}/rides${query}`)).data.rides;
+}));
+
+$("#new-key").addEventListener("click", () => {
+  $("#idem-key").value = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+});
+
+$("#map").addEventListener("click", (event) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  state.pin = unproject(
+    ((event.clientX - rect.left) / rect.width) * VIEW.width,
+    ((event.clientY - rect.top) / rect.height) * VIEW.height,
+  );
+  fillPlaceSelects();
+  renderMap();
+  scheduleQuote();
+  toast(`Pin dropped at ${placeName(state.pin)}`);
+});
+
+$("#seed").addEventListener("click", guard(async () => {
+  await refresh();
+  const hasUser = (name) => state.users.some((u) => u.name === name);
+  const hasDriver = (name) => state.drivers.some((d) => d.name === name);
+  const drivers = [
+    { name: "Ravi", car_type: "HATCHBACK", rating: 4.6, location: { lat: 12.978, lng: 77.61 } },
+    { name: "Meena", car_type: "SEDAN", rating: 4.9, location: { lat: 12.97, lng: 77.6 } },
+    { name: "Arun", car_type: "HATCHBACK", rating: 4.2, location: { lat: 13.05, lng: 77.7 } },
+  ];
+  if (!hasUser("Asha")) await api("POST", "/users", { name: "Asha" });
+  for (const d of drivers) if (!hasDriver(d.name)) await api("POST", "/drivers", d);
+  for (const c of [{ code: "SAVE20", kind: "PERCENT", percent: 20 }, { code: "FLAT30", kind: "FLAT", amount_paise: 3000 }]) {
+    if (!state.coupons.some((x) => x.code === c.code)) await api("POST", "/coupons", c);
+  }
+  toast("Loaded 1 rider, 3 drivers (Arun is out of range) and 2 coupons");
+}));
+
+async function checkHealth() {
+  const dot = $("#health-dot");
+  const text = $("#health-text");
+  try {
+    const res = await fetch("/healthz");
+    if (!res.ok) throw new Error(String(res.status));
+    dot.className = "dot up";
+    text.textContent = "API up";
+  } catch {
+    dot.className = "dot down";
+    text.textContent = "API unreachable";
+  }
+}
+
+// Skip a background refresh while someone is typing or has a dropdown open, so nothing jumps under them.
+function isEditing() {
+  const active = document.activeElement;
+  return active instanceof HTMLInputElement || active instanceof HTMLSelectElement;
+}
+
+fillPlaceSelects();
+render();
+checkHealth();
+sync().then(scheduleQuote);
+setInterval(checkHealth, 10000);
+setInterval(() => { if (!isEditing()) sync(); }, REFRESH_MS);
+</script>
+</body>
+</html>

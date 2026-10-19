@@ -1,0 +1,6 @@
+.git
+.github
+bin
+cover.out
+test/e2e/node_modules
+*.md
