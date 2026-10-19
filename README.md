@@ -1,6 +1,6 @@
 # PlazzaCabCast
 
-A ride hailing backend in Go, built for Plazza's SDE-1 machine-coding round. It uses only the standard library and keeps everything in memory. A small browser console ships in the same binary, so you can click through the flows instead of typing curl.
+A ride hailing backend in Go, built for a machine coding round. It uses only the standard library and keeps everything in memory. A small browser console ships in the same binary, so you can click through the flows instead of typing curl.
 
 Everything in the mandatory list is done, and so are all four bonus items: surge pricing, switchable matching, cancellation with a fee, and safe booking when two riders go for the same driver.
 
@@ -94,4 +94,4 @@ I built this with Claude Code in VS Code.
 - Idempotent booking and the fare estimate were my additions; the brief doesn't ask for either.
 - The linter caught a few AI-written test helpers with parameters that never changed, and a Go 1.25 API used in a Go 1.24 module. Both were fixed.
 
-I've read every line in this repo and can explain any of it. Where I couldn't, it came out.
+I took AI's help to write this, but I understand every part of it and own it. I'm happy to explain any piece or walk through it on a demo call whenever you'd like.
